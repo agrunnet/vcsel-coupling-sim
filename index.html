@@ -73,9 +73,9 @@
   <p class="subtitle">850 nm VCSEL · 10 µm aperture · Sumitomo Bakelite polymer waveguide</p>
 
   <div class="metrics">
-    <div class="card"><div class="card-label" id="lbl-card-eta">Coupling η</div><div class="card-value" id="m-eta" style="color:#378ADD">—</div><div class="card-sub" id="m-eta-db">—</div></div>
-    <div class="card" id="card-eta2" style="display:none"><div class="card-label">VCSEL 2 η</div><div class="card-value" id="m-eta2" style="color:#D85A30">—</div><div class="card-sub" id="m-eta2-db">—</div></div>
-    <div class="card" id="card-combined" style="display:none"><div class="card-label">Combined η</div><div class="card-value" id="m-combined" style="color:#1D9E75">—</div><div class="card-sub">ref: both VCSELs</div></div>
+    <div class="card"><div class="card-label" id="lbl-card-eta">VCSEL 1 η</div><div class="card-value" id="m-eta" style="color:#378ADD">—</div><div class="card-sub" id="m-eta-db">—</div></div>
+    <div class="card" id="card-eta2" style=""><div class="card-label">VCSEL 2 η</div><div class="card-value" id="m-eta2" style="color:#D85A30">—</div><div class="card-sub" id="m-eta2-db">—</div></div>
+    <div class="card" id="card-combined" style=""><div class="card-label">Combined η</div><div class="card-value" id="m-combined" style="color:#1D9E75">—</div><div class="card-sub">ref: both VCSELs</div></div>
     <div class="card"><div class="card-label">Beam ⌀ at gap</div><div class="card-value" id="m-beam" style="color:#1D9E75">—</div><div class="card-sub" id="m-beam-sub">—</div></div>
     <div class="card"><div class="card-label" id="lbl-modes-card">Guided modes</div><div class="card-value" id="m-modes" style="color:#534AB7">—</div><div class="card-sub" id="m-modes-sub">—</div></div>
     <div class="card" id="card-modes-taper" style="display:none"><div class="card-label">Modes after taper</div><div class="card-value" id="m-modes-taper" style="color:#534AB7">—</div><div class="card-sub" id="m-modes-taper-sub">—</div></div>
@@ -92,7 +92,7 @@
     <div class="panel-title">System parameters</div>
     <div class="grid2">
       <div class="slider-row">
-        <div class="slider-row-head"><span id="lbl-dx-title">X offset (Δx)</span><span id="lbl-dx">0.0 µm</span></div>
+        <div class="slider-row-head"><span id="lbl-dx-title">X offset — pair midpoint</span><span id="lbl-dx">0.0 µm</span></div>
         <input type="range" id="dx" min="-100" max="100" step="0.5" value="0">
       </div>
       <div class="slider-row">
@@ -102,6 +102,10 @@
       <div class="slider-row">
         <div class="slider-row-head"><span>Tilt angle (Δθ)</span><span id="lbl-dtheta">0.00 °</span></div>
         <input type="range" id="dtheta" min="-15" max="15" step="0.25" value="0">
+      </div>
+      <div class="slider-row">
+        <div class="slider-row-head"><span>Waveguide height (Y)</span><span id="lbl-wgh">50 µm</span></div>
+        <input type="range" id="wgh" min="10" max="100" step="1" value="50">
       </div>
     </div>
 
@@ -201,19 +205,19 @@
     <!-- Dual VCSEL -->
     <div class="vcsel2-panel">
       <div class="vcsel2-header">
-        <label><input type="checkbox" id="vcsel2-enable" onchange="onVcsel2Toggle()">
+        <label>        <input type="checkbox" id="vcsel2-enable" onchange="onVcsel2Toggle()" checked>
           <span class="vcsel-dot" style="background:#D85A30"></span>
           Add second VCSEL
         </label>
         <span style="font-size:12px;color:#888">Incoherent — power adds linearly</span>
       </div>
-      <div id="vcsel2-controls" style="display:none">
+      <div id="vcsel2-controls" style="display:block">
         <div class="slider-row">
           <div class="slider-row-head">
             <span><span class="vcsel-dot" style="background:#D85A30;margin-right:4px"></span>VCSEL 2 separation from VCSEL 1</span>
-            <span id="lbl-vcsel2-cx">20.0 µm</span>
+            <span id="lbl-vcsel2-cx">30.0 µm</span>
           </div>
-          <input type="range" id="vcsel2-cx" min="-100" max="100" step="0.5" value="20">
+          <input type="range" id="vcsel2-cx" min="-100" max="100" step="0.5" value="30">
         </div>
         <div id="vcsel2-sep-info" style="font-size:12px;color:#888;margin-top:2px"></div>
       </div>
@@ -278,8 +282,8 @@
   <!-- Tab 2 -->
   <div class="tab-panel" id="tab2">
     <div class="slider-row">
-      <div class="slider-row-head"><span>Waveguide input width</span><span id="lbl-wgw2">50 µm</span></div>
-      <input type="range" id="wgw2" min="50" max="100" step="1" value="50">
+      <div class="slider-row-head"><span>Waveguide input width</span>      <span id="lbl-wgw2">100 µm</span></div>
+      <input type="range" id="wgw2" min="50" max="200" step="1" value="100">
     </div>
     <div class="slider-row" style="margin-bottom:12px">
       <div class="slider-row-head"><span>Taper length</span><span id="lbl-taper">5.0 mm</span></div>
@@ -671,7 +675,7 @@ function onVcsel2Toggle() {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
-var wgw2 = 50, currentTab = 0, yAxisMode = "pct";
+var wgw2 = 100, currentTab = 0, yAxisMode = "pct";
 
 function setYAxis(mode) {
   yAxisMode = mode;
@@ -754,8 +758,7 @@ function update() {
 
   // Mode counts
   var modes      = numModes(inputW*1e-6, wgH*1e-6);
-  var modesFinal = numModes(50e-6, wgH*1e-6);
-  var modesAfterTaper = Math.min(modes, modesFinal);
+  var modesFinal = numModes(50e-6, wgH*1e-6);  var modesAfterTaper = Math.min(modes, modesFinal);
 
   // Metric cards
   document.getElementById("m-eta").textContent    = (dispEta1*100).toFixed(1)+"%";
@@ -842,6 +845,7 @@ bindSlider("dx",        "lbl-dx",        "µm", 1);
 bindSlider("dy",        "lbl-dy",        "µm", 1);
 bindSlider("dtheta",    "lbl-dtheta",    "°",  2);
 bindSlider("wgw",       "lbl-wgw",       "µm", 0);
+bindSlider("wgh",       "lbl-wgh",       "µm", 0);
 bindSlider("taper",     "lbl-taper",     "mm", 1);
 bindSlider("vcsel2-cx", "lbl-vcsel2-cx", "µm", 1);
 document.getElementById("wgw2").addEventListener("input", function(){
@@ -852,7 +856,7 @@ document.getElementById("wgw2").addEventListener("input", function(){
 document.getElementById("custom-n").addEventListener("input", update);
 
 // ── URL state ─────────────────────────────────────────────────────────────────
-var URL_KEYS = ["sep","dx","dy","dtheta","wgw","taper","vcsel2-cx","gap-material","custom-n",
+var URL_KEYS = ["sep","dx","dy","dtheta","wgw","wgh","taper","vcsel2-cx","gap-material","custom-n",
   "ar-vcsel","ar-vcsel-preset","ar-vcsel-r",
   "ar-entry","ar-entry-preset","ar-entry-r",
   "ar-exit","ar-exit-preset","ar-exit-r",
@@ -878,9 +882,9 @@ function saveToURL() {
 function loadFromURL() {
   var params = new URLSearchParams(window.location.search);
   if (!params.toString()) return;
-  var lblMap  = {sep:"lbl-sep",dx:"lbl-dx",dy:"lbl-dy",dtheta:"lbl-dtheta",wgw:"lbl-wgw",taper:"lbl-taper","vcsel2-cx":"lbl-vcsel2-cx",wgw2:"lbl-wgw2"};
-  var unitMap = {sep:"µm",dx:"µm",dy:"µm",dtheta:"°",wgw:"µm",taper:"mm","vcsel2-cx":"µm",wgw2:"µm"};
-  var decMap  = {sep:1,dx:1,dy:1,dtheta:2,wgw:0,taper:1,"vcsel2-cx":1,wgw2:0};
+  var lblMap  = {sep:"lbl-sep",dx:"lbl-dx",dy:"lbl-dy",dtheta:"lbl-dtheta",wgw:"lbl-wgw",wgh:"lbl-wgh",taper:"lbl-taper","vcsel2-cx":"lbl-vcsel2-cx",wgw2:"lbl-wgw2"};
+  var unitMap = {sep:"µm",dx:"µm",dy:"µm",dtheta:"°",wgw:"µm",wgh:"µm",taper:"mm","vcsel2-cx":"µm",wgw2:"µm"};
+  var decMap  = {sep:1,dx:1,dy:1,dtheta:2,wgw:0,wgh:0,taper:1,"vcsel2-cx":1,wgw2:0};
   URL_KEYS.forEach(function(id) {
     if (!params.has(id)) return;
     var el = document.getElementById(id);
