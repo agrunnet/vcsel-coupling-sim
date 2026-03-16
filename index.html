@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VCSEL–Waveguide Coupling Simulator</title>
+<title>VCSEL–Waveguide Coupling Simulator v2025.03.16</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui, sans-serif; background: #f5f5f2; color: #222; font-size: 15px; }
@@ -69,7 +69,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>VCSEL–Multimode Waveguide Coupling Simulator</h1>
+  <h1>VCSEL–Multimode Waveguide Coupling Simulator <span style="font-size:13px;font-weight:400;color:#888">v2025.03.16</span></h1>
   <p class="subtitle">850 nm VCSEL · 10 µm aperture · Sumitomo Bakelite polymer waveguide</p>
 
   <div class="metrics">
@@ -112,13 +112,13 @@
     <div class="gap-row">
       <div class="slider-row-head" style="margin-bottom:6px">
         <span style="font-size:13px;color:#666">Gap / spacer</span>
-        <span id="lbl-sep" style="font-weight:500;color:#222;font-size:13px">10.0 µm</span>
+        <span id="lbl-sep" style="font-weight:500;color:#222;font-size:13px">325.0 µm</span>
       </div>
       <div class="gap-controls">
-        <input type="range" id="sep" min="0" max="300" step="1" value="10">
+        <input type="range" id="sep" min="0" max="500" step="1" value="325">
         <select id="gap-material" onchange="onMaterialChange()">
           <option value="air">Air (n = 1.000)</option>
-          <option value="sic">SiC (n = 2.630)</option>
+          <option value="sic" selected>SiC (n = 2.630)</option>
           <option value="sio2">SiO₂ (n = 1.453)</option>
           <option value="si3n4">Si₃N₄ (n = 2.000)</option>
           <option value="pmma">PMMA (n = 1.489)</option>
@@ -152,8 +152,8 @@
         </div>
         <div class="ar-surface">
           <div class="ar-surface-title">Gap entry face <span class="ar-badge off" id="badge-entry">uncoated</span></div>
-          <div class="ar-row"><label><input type="checkbox" id="ar-entry" onchange="onArCheck('entry',this.checked)"> Enable AR coating</label></div>
-          <div id="ar-entry-opts" style="display:none">
+          <div class="ar-row"><label><input type="checkbox" id="ar-entry" onchange="onArCheck('entry',this.checked)" checked> Enable AR coating</label></div>
+          <div id="ar-entry-opts" style="display:block">
             <div class="ar-row"><span style="min-width:52px">Preset:</span>
               <select id="ar-entry-preset" onchange="onArPreset('entry')">
                 <option value="ideal">Ideal (R=0%)</option><option value="sin">SiN (R≈0.1%)</option>
@@ -167,8 +167,8 @@
         </div>
         <div class="ar-surface">
           <div class="ar-surface-title">Gap exit face <span class="ar-badge off" id="badge-exit">uncoated</span></div>
-          <div class="ar-row"><label><input type="checkbox" id="ar-exit" onchange="onArCheck('exit',this.checked)"> Enable AR coating</label></div>
-          <div id="ar-exit-opts" style="display:none">
+          <div class="ar-row"><label><input type="checkbox" id="ar-exit" onchange="onArCheck('exit',this.checked)" checked> Enable AR coating</label></div>
+          <div id="ar-exit-opts" style="display:block">
             <div class="ar-row"><span style="min-width:52px">Preset:</span>
               <select id="ar-exit-preset" onchange="onArPreset('exit')">
                 <option value="ideal">Ideal (R=0%)</option><option value="sin">SiN (R≈0.1%)</option>
@@ -222,10 +222,6 @@
         <div id="vcsel2-sep-info" style="font-size:12px;color:#888;margin-top:2px"></div>
       </div>
     </div>
-  </div>
-
-  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-    <button id="save-url-btn" onclick="saveToURL()" style="font-size:13px;font-family:inherit;padding:6px 14px;border-radius:6px;cursor:pointer;border:0.5px solid #a0c4ee;background:#ddeeff;color:#185FA5;">Copy shareable link</button>
   </div>
 
   <div class="tabs">
@@ -803,7 +799,7 @@ function update() {
     if (dual) vmarks.push({x:v2x, col:"#D85A30"});
     drawCurve("chart-dx",  xs1, ysV1, "X midpoint (µm)", "#378ADD", vmarks, useDb, ysV2, "#D85A30");
 
-    var ss = range(0, 300, 121);
+    var ss = range(0, 500, 121);
     drawCurve("chart-sep", ss, ss.map(function(s){ return coupling(v1x,dy,dtheta,s,wgw,wgH,n_gap,fEff); }),
       "Gap (µm)", "#1D9E75", [{x:sep,col:"#1D9E75"}], useDb);
 
@@ -870,12 +866,14 @@ function saveToURL() {
     if (!el) return;
     params.set(id, el.type === "checkbox" ? (el.checked ? "1" : "0") : el.value);
   });
-  var url = window.location.pathname + "?" + params.toString();
-  history.replaceState(null, "", url);
-  navigator.clipboard.writeText(window.location.href).then(function() {
+  var queryString = "?" + params.toString();
+  navigator.clipboard.writeText(queryString).then(function() {
     var btn = document.getElementById("save-url-btn");
     btn.textContent = "Link copied!";
     setTimeout(function(){ btn.textContent = "Copy shareable link"; }, 2000);
+  }).catch(function() {
+    // Fallback: show the string in a prompt so user can copy manually
+    window.prompt("Copy this query string and append to your file URL:", queryString);
   });
 }
 
