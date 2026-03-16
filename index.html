@@ -729,28 +729,27 @@ function update() {
       "V1 at "+v1x.toFixed(1)+" µm  |  V2 at "+v2x.toFixed(1)+" µm  |  separation: "+Math.abs(v2cx).toFixed(1)+" µm";
   }
 
-  // Input width: taper tab uses wgw2, others use wgw
   var inputW = (currentTab === 2) ? wgw2 : wgw;
 
-  // Coupling — system width
-  var eta1 = coupling(v1x, dy, dtheta, sep, wgw, wgH, n_gap, fEff);
-  var eta2 = dual ? coupling(v2x, dy, dtheta, sep, wgw, wgH, n_gap, fEff) : 0;
-  var etaCombined = dual ? (eta1+eta2)/2 : eta1;
+  // All coupling computed from inputW — single source of truth
+  var eta1 = coupling(v1x, dy, dtheta, sep, inputW, wgH, n_gap, fEff);
+  var eta2 = dual ? coupling(v2x, dy, dtheta, sep, inputW, wgH, n_gap, fEff) : 0;
+  var etaCombined = dual ? (eta1 + eta2) / 2 : eta1;
 
-  // Coupling — taper input width
-  var eta1w2 = coupling(v1x, dy, dtheta, sep, wgw2, wgH, n_gap, fEff);
-  var eta2w2 = dual ? coupling(v2x, dy, dtheta, sep, wgw2, wgH, n_gap, fEff) : 0;
-  var etaCombW2 = dual ? (eta1w2+eta2w2)/2 : eta1w2;
+  // Taper calculation also uses inputW-based combined efficiency
+  var eta1w2 = (currentTab === 2) ? eta1 : coupling(v1x, dy, dtheta, sep, wgw2, wgH, n_gap, fEff);
+  var eta2w2 = (currentTab === 2) ? eta2 : (dual ? coupling(v2x, dy, dtheta, sep, wgw2, wgH, n_gap, fEff) : 0);
+  var etaCombW2 = dual ? (eta1w2 + eta2w2) / 2 : eta1w2;
 
   var wz    = beamR(sep*1e-6, n_gap)*1e6;
   var Lad   = adiabaticL(wgw2, 50);
   var ttx   = taperTx(taper, Lad);
-  var total = etaCombW2 * ttx;
+  // Total η: coupling into inputW × taper transmission — consistent with displayed cards
+  var total = etaCombined * ttx;
 
-  // Display values — taper tab uses wgw2-based coupling
-  var dispEta1     = (currentTab === 2) ? eta1w2 : eta1;
-  var dispEta2     = (currentTab === 2) ? eta2w2 : eta2;
-  var dispCombined = (currentTab === 2) ? etaCombW2 : etaCombined;
+  var dispEta1     = eta1;
+  var dispEta2     = eta2;
+  var dispCombined = etaCombined;
 
   // Mode counts
   var modes      = numModes(inputW*1e-6, wgH*1e-6);
@@ -770,7 +769,6 @@ function update() {
   document.getElementById("m-modes-sub").textContent = inputW+"×"+wgH+" µm";
   document.getElementById("m-total").textContent     = (total*100).toFixed(1)+"%";
   document.getElementById("m-total-db").textContent  = (10*Math.log10(Math.max(total,1e-9))).toFixed(2)+" dB";
-
   var taperCard = document.getElementById("card-modes-taper");
   taperCard.style.display = (currentTab === 2) ? "" : "none";
   if (currentTab === 2) {
