@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VCSEL–Waveguide Coupling Simulator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f2; color: #222; font-size: 15px; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+  .metrics { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .card { background: #eeeee8; border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 90px; }
+  .card-label { font-size: 11px; color: #777; margin-bottom: 2px; }
+  .card-value { font-size: 22px; font-weight: 500; }
+  .card-sub { font-size: 11px; color: #888; }
+  .panel { background: #eeeee8; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; }
+  .panel-title { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+  .slider-row { margin-bottom: 10px; }
+  .slider-row-head { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 3px; }
+  .slider-row-head span:last-child { font-weight: 500; color: #222; }
+  input[type=range] { width: 100%; accent-color: #378ADD; }
+  .gap-row { margin-bottom: 10px; }
+  .gap-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .gap-controls input[type=range] { flex: 1; min-width: 120px; }
+  select { font-size: 13px; font-family: inherit; padding: 4px 8px; border-radius: 6px; border: 0.5px solid #ccc; background: #fff; color: #222; cursor: pointer; }
+  .n-input-wrap { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #666; }
+  .n-input-wrap input[type=number] { width: 68px; font-size: 13px; font-family: inherit; padding: 4px 7px; border-radius: 6px; border: 0.5px solid #ccc; background: #fff; color: #222; }
+  .ar-panel { border-top: 0.5px solid #d8d8d0; margin-top: 12px; padding-top: 12px; }
+  .ar-title { font-size: 12px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .ar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+  .ar-surface { background: #fff; border: 0.5px solid #d0d0c8; border-radius: 8px; padding: 10px 12px; }
+  .ar-surface-title { font-size: 12px; font-weight: 500; color: #555; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .ar-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+  .ar-badge.on  { background: #ddeeff; color: #185FA5; border: 0.5px solid #a0c4ee; }
+  .ar-badge.off { background: #eeeee8; color: #888; border: 0.5px solid #ccc; }
+  .ar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; color: #666; }
+  .ar-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .ar-row input[type=checkbox] { accent-color: #378ADD; width: 14px; height: 14px; cursor: pointer; }
+  .ar-row select { font-size: 12px; padding: 3px 6px; }
+  .ar-row .n-input-wrap input[type=number] { width: 60px; font-size: 12px; padding: 3px 6px; }
+  .ar-loss-line { font-size: 12px; color: #888; margin-top: 4px; }
+  .vcsel2-panel { border-top: 0.5px solid #d8d8d0; margin-top: 12px; padding-top: 12px; }
+  .vcsel2-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .vcsel2-header label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #555; cursor: pointer; }
+  .vcsel2-header input[type=checkbox] { accent-color: #D85A30; width: 15px; height: 15px; cursor: pointer; }
+  .vcsel-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tab { padding: 6px 14px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 0.5px solid #ccc; background: #eeeee8; color: #666; font-family: inherit; }
+  .tab.active { background: #ddeeff; color: #185FA5; border-color: #a0c4ee; font-weight: 500; }
+  .yaxis-btn { padding: 4px 14px; font-size: 13px; border-radius: 6px; cursor: pointer; border: 0.5px solid #ccc; background: #eeeee8; color: #666; font-family: inherit; }
+  .yaxis-btn.active { background: #ddeeff; color: #185FA5; border-color: #a0c4ee; font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .chart-label { font-size: 12px; color: #777; margin-bottom: 4px; }
+  canvas { width: 100%; height: auto; display: block; }
+  .chart-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .info { padding: 10px 14px; background: #eeeee8; border-radius: 8px; font-size: 13px; color: #666; line-height: 1.6; margin-top: 14px; }
+  .info strong { color: #222; font-weight: 500; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: #666; margin-bottom: 6px; align-items: center; flex-wrap: wrap; }
+  .legend-line { width: 22px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+  @media (max-width: 520px) {
+    .grid2, .chart-grid2, .ar-grid { grid-template-columns: 1fr; }
+    .metrics { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>VCSEL–Multimode Waveguide Coupling Simulator</h1>
+  <p class="subtitle">850 nm VCSEL · 10 µm aperture · Sumitomo Bakelite polymer waveguide</p>
+
+  <div class="metrics">
+    <div class="card"><div class="card-label" id="lbl-card-eta">Coupling η</div><div class="card-value" id="m-eta" style="color:#378ADD">—</div><div class="card-sub" id="m-eta-db">—</div></div>
+    <div class="card" id="card-eta2" style="display:none"><div class="card-label">VCSEL 2 η</div><div class="card-value" id="m-eta2" style="color:#D85A30">—</div><div class="card-sub" id="m-eta2-db">—</div></div>
+    <div class="card" id="card-combined" style="display:none"><div class="card-label">Combined η</div><div class="card-value" id="m-combined" style="color:#1D9E75">—</div><div class="card-sub">ref: both VCSELs</div></div>
+    <div class="card"><div class="card-label">Beam ⌀ at gap</div><div class="card-value" id="m-beam" style="color:#1D9E75">—</div><div class="card-sub" id="m-beam-sub">—</div></div>
+    <div class="card"><div class="card-label" id="lbl-modes-card">Guided modes</div><div class="card-value" id="m-modes" style="color:#534AB7">—</div><div class="card-sub" id="m-modes-sub">—</div></div>
+    <div class="card" id="card-modes-taper" style="display:none"><div class="card-label">Modes after taper</div><div class="card-value" id="m-modes-taper" style="color:#534AB7">—</div><div class="card-sub" id="m-modes-taper-sub">—</div></div>
+    <div class="card"><div class="card-label">Total η (w/taper)</div><div class="card-value" id="m-total" style="color:#D85A30">—</div><div class="card-sub" id="m-total-db">—</div></div>
+  </div>
+
+  <!-- Coupling diagram -->
+  <div class="panel">
+    <div class="panel-title" style="margin-bottom:8px">Coupling diagram <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:#aaa">(Y to scale, X compressed)</span></div>
+    <canvas id="coupling-diagram" width="720" height="200" style="width:100%;height:auto;display:block;border-radius:4px"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">System parameters</div>
+    <div class="grid2">
+      <div class="slider-row">
+        <div class="slider-row-head"><span id="lbl-dx-title">X offset (Δx)</span><span id="lbl-dx">0.0 µm</span></div>
+        <input type="range" id="dx" min="-100" max="100" step="0.5" value="0">
+      </div>
+      <div class="slider-row">
+        <div class="slider-row-head"><span>Y offset (Δy)</span><span id="lbl-dy">0.0 µm</span></div>
+        <input type="range" id="dy" min="-30" max="30" step="0.5" value="0">
+      </div>
+      <div class="slider-row">
+        <div class="slider-row-head"><span>Tilt angle (Δθ)</span><span id="lbl-dtheta">0.00 °</span></div>
+        <input type="range" id="dtheta" min="-15" max="15" step="0.25" value="0">
+      </div>
+    </div>
+
+    <div class="gap-row">
+      <div class="slider-row-head" style="margin-bottom:6px">
+        <span style="font-size:13px;color:#666">Gap / spacer</span>
+        <span id="lbl-sep" style="font-weight:500;color:#222;font-size:13px">10.0 µm</span>
+      </div>
+      <div class="gap-controls">
+        <input type="range" id="sep" min="0" max="300" step="1" value="10">
+        <select id="gap-material" onchange="onMaterialChange()">
+          <option value="air">Air (n = 1.000)</option>
+          <option value="sic">SiC (n = 2.630)</option>
+          <option value="sio2">SiO₂ (n = 1.453)</option>
+          <option value="si3n4">Si₃N₄ (n = 2.000)</option>
+          <option value="pmma">PMMA (n = 1.489)</option>
+          <option value="custom">Custom n…</option>
+        </select>
+        <div class="n-input-wrap" id="custom-n-wrap" style="display:none">
+          n = <input type="number" id="custom-n" min="1" max="5" step="0.001" value="1.500">
+        </div>
+      </div>
+      <div id="gap-info" style="font-size:12px;color:#888;margin-top:5px"></div>
+    </div>
+
+    <!-- AR coatings -->
+    <div class="ar-panel">
+      <div class="ar-title">AR coatings</div>
+      <div class="ar-grid">
+        <div class="ar-surface">
+          <div class="ar-surface-title">VCSEL facet <span class="ar-badge off" id="badge-vcsel">uncoated</span></div>
+          <div class="ar-row"><label><input type="checkbox" id="ar-vcsel" onchange="onArCheck('vcsel',this.checked)"> Enable AR coating</label></div>
+          <div id="ar-vcsel-opts" style="display:none">
+            <div class="ar-row"><span style="min-width:52px">Preset:</span>
+              <select id="ar-vcsel-preset" onchange="onArPreset('vcsel')">
+                <option value="ideal">Ideal (R=0%)</option><option value="sin">SiN (R≈0.1%)</option>
+                <option value="mgo">MgO (R≈0.2%)</option><option value="sio2">SiO₂ (R≈0.5%)</option>
+                <option value="custom">Custom R…</option>
+              </select>
+            </div>
+            <div class="ar-row n-input-wrap" id="ar-vcsel-custom" style="display:none">R=<input type="number" id="ar-vcsel-r" min="0" max="100" step="0.01" value="0.1">%</div>
+          </div>
+          <div class="ar-loss-line">Fresnel R = <span id="rv-vcsel">—</span></div>
+        </div>
+        <div class="ar-surface">
+          <div class="ar-surface-title">Gap entry face <span class="ar-badge off" id="badge-entry">uncoated</span></div>
+          <div class="ar-row"><label><input type="checkbox" id="ar-entry" onchange="onArCheck('entry',this.checked)"> Enable AR coating</label></div>
+          <div id="ar-entry-opts" style="display:none">
+            <div class="ar-row"><span style="min-width:52px">Preset:</span>
+              <select id="ar-entry-preset" onchange="onArPreset('entry')">
+                <option value="ideal">Ideal (R=0%)</option><option value="sin">SiN (R≈0.1%)</option>
+                <option value="mgo">MgO (R≈0.2%)</option><option value="sio2">SiO₂ (R≈0.5%)</option>
+                <option value="custom">Custom R…</option>
+              </select>
+            </div>
+            <div class="ar-row n-input-wrap" id="ar-entry-custom" style="display:none">R=<input type="number" id="ar-entry-r" min="0" max="100" step="0.01" value="0.1">%</div>
+          </div>
+          <div class="ar-loss-line">Fresnel R = <span id="rv-entry">—</span></div>
+        </div>
+        <div class="ar-surface">
+          <div class="ar-surface-title">Gap exit face <span class="ar-badge off" id="badge-exit">uncoated</span></div>
+          <div class="ar-row"><label><input type="checkbox" id="ar-exit" onchange="onArCheck('exit',this.checked)"> Enable AR coating</label></div>
+          <div id="ar-exit-opts" style="display:none">
+            <div class="ar-row"><span style="min-width:52px">Preset:</span>
+              <select id="ar-exit-preset" onchange="onArPreset('exit')">
+                <option value="ideal">Ideal (R=0%)</option><option value="sin">SiN (R≈0.1%)</option>
+                <option value="mgo">MgO (R≈0.2%)</option><option value="sio2">SiO₂ (R≈0.5%)</option>
+                <option value="custom">Custom R…</option>
+              </select>
+            </div>
+            <div class="ar-row n-input-wrap" id="ar-exit-custom" style="display:none">R=<input type="number" id="ar-exit-r" min="0" max="100" step="0.01" value="0.1">%</div>
+          </div>
+          <div class="ar-loss-line">Fresnel R = <span id="rv-exit">—</span></div>
+        </div>
+        <div class="ar-surface">
+          <div class="ar-surface-title">Waveguide facet <span class="ar-badge off" id="badge-wg">uncoated</span></div>
+          <div class="ar-row"><label><input type="checkbox" id="ar-wg" onchange="onArCheck('wg',this.checked)"> Enable AR coating</label></div>
+          <div id="ar-wg-opts" style="display:none">
+            <div class="ar-row"><span style="min-width:52px">Preset:</span>
+              <select id="ar-wg-preset" onchange="onArPreset('wg')">
+                <option value="ideal">Ideal (R=0%)</option><option value="sin">SiN (R≈0.1%)</option>
+                <option value="mgo">MgO (R≈0.2%)</option><option value="sio2">SiO₂ (R≈0.5%)</option>
+                <option value="custom">Custom R…</option>
+              </select>
+            </div>
+            <div class="ar-row n-input-wrap" id="ar-wg-custom" style="display:none">R=<input type="number" id="ar-wg-r" min="0" max="100" step="0.01" value="0.1">%</div>
+          </div>
+          <div class="ar-loss-line">Fresnel R = <span id="rv-wg">—</span></div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#888;margin-top:10px">
+        Total interface loss: <span id="total-fresnel-loss" style="font-weight:500;color:#222">—</span> &nbsp;|&nbsp;
+        Fresnel efficiency: <span id="total-fresnel-eff" style="font-weight:500;color:#378ADD">—</span>
+      </div>
+    </div>
+
+    <!-- Dual VCSEL -->
+    <div class="vcsel2-panel">
+      <div class="vcsel2-header">
+        <label><input type="checkbox" id="vcsel2-enable" onchange="onVcsel2Toggle()">
+          <span class="vcsel-dot" style="background:#D85A30"></span>
+          Add second VCSEL
+        </label>
+        <span style="font-size:12px;color:#888">Incoherent — power adds linearly</span>
+      </div>
+      <div id="vcsel2-controls" style="display:none">
+        <div class="slider-row">
+          <div class="slider-row-head">
+            <span><span class="vcsel-dot" style="background:#D85A30;margin-right:4px"></span>VCSEL 2 separation from VCSEL 1</span>
+            <span id="lbl-vcsel2-cx">20.0 µm</span>
+          </div>
+          <input type="range" id="vcsel2-cx" min="-100" max="100" step="0.5" value="20">
+        </div>
+        <div id="vcsel2-sep-info" style="font-size:12px;color:#888;margin-top:2px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button id="save-url-btn" onclick="saveToURL()" style="font-size:13px;font-family:inherit;padding:6px 14px;border-radius:6px;cursor:pointer;border:0.5px solid #a0c4ee;background:#ddeeff;color:#185FA5;">Copy shareable link</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)">Alignment</button>
+    <button class="tab" onclick="switchTab(1)">Waveguide width</button>
+    <button class="tab" onclick="switchTab(2)">Taper design</button>
+  </div>
+
+  <!-- Tab 0 -->
+  <div class="tab-panel active" id="tab0">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:13px;color:#666">Y axis:</span>
+      <button class="yaxis-btn active" id="btn-pct" onclick="setYAxis('pct')">%</button>
+      <button class="yaxis-btn" id="btn-db" onclick="setYAxis('db')">dB</button>
+    </div>
+    <div class="chart-grid2">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="chart-label">X position sensitivity</div>
+          <div class="legend" id="legend-dx"></div>
+        </div>
+        <canvas id="chart-dx" width="680" height="360"></canvas>
+      </div>
+      <div><div class="chart-label">Gap sensitivity</div><canvas id="chart-sep" width="680" height="360"></canvas></div>
+    </div>
+    <div style="max-width:380px">
+      <div class="chart-label">Angular tilt sensitivity</div>
+      <canvas id="chart-ang" width="680" height="360"></canvas>
+    </div>
+    <div class="info"><strong>Key parameters — </strong>
+      VCSEL: 10 µm aperture, ~10° half-angle, λ=850 nm &nbsp;|&nbsp;
+      WG NA=<span id="info-na">—</span> &nbsp;|&nbsp;
+      Rayleigh range=<span id="info-zr">—</span> µm &nbsp;|&nbsp;
+      Interface loss=<span id="info-fresnel">—</span>
+    </div>
+  </div>
+
+  <!-- Tab 1 -->
+  <div class="tab-panel" id="tab1">
+    <div class="slider-row" style="margin-bottom:12px">
+      <div class="slider-row-head"><span>Waveguide width</span><span id="lbl-wgw">50 µm</span></div>
+      <input type="range" id="wgw" min="50" max="100" step="1" value="50">
+    </div>
+    <div class="metrics" style="margin-bottom:14px">
+      <div class="card"><div class="card-label">Aspect ratio</div><div class="card-value" id="m-ar" style="color:#534AB7">—</div><div class="card-sub" id="m-ar-sub">—</div></div>
+      <div class="card"><div class="card-label">WG NA</div><div class="card-value" id="m-na" style="color:#1D9E75">—</div><div class="card-sub">Sumitomo OE-4140</div></div>
+      <div class="card"><div class="card-label">V-number</div><div class="card-value" id="m-vnum" style="color:#BA7517">—</div><div class="card-sub">~modes²/2</div></div>
+    </div>
+    <div class="chart-label">Coupling η vs waveguide width (height fixed 50 µm)</div>
+    <canvas id="chart-width" width="680" height="360"></canvas>
+    <div class="info"><strong>Why width helps — </strong>Widening captures more of the diverging beam in X. Rayleigh range=<span id="info-zr2">—</span> µm.</div>
+  </div>
+
+  <!-- Tab 2 -->
+  <div class="tab-panel" id="tab2">
+    <div class="slider-row">
+      <div class="slider-row-head"><span>Waveguide input width</span><span id="lbl-wgw2">50 µm</span></div>
+      <input type="range" id="wgw2" min="50" max="100" step="1" value="50">
+    </div>
+    <div class="slider-row" style="margin-bottom:12px">
+      <div class="slider-row-head"><span>Taper length</span><span id="lbl-taper">5.0 mm</span></div>
+      <input type="range" id="taper" min="0.1" max="60" step="0.1" value="5">
+    </div>
+    <div class="metrics" style="margin-bottom:14px">
+      <div class="card"><div class="card-label">Min adiabatic L</div><div class="card-value" id="m-lad" style="color:#D85A30">—</div><div class="card-sub" id="m-lad-sub">—</div></div>
+      <div class="card"><div class="card-label">Taper transmission</div><div class="card-value" id="m-ttx" style="color:#1D9E75">—</div><div class="card-sub" id="m-ttx-sub">—</div></div>
+      <div class="card"><div class="card-label">Total system η</div><div class="card-value" id="m-ttotal" style="color:#378ADD">—</div><div class="card-sub">coupling × taper</div></div>
+    </div>
+    <div class="chart-label" id="taper-chart-label">Total efficiency vs taper length</div>
+    <canvas id="chart-taper" width="680" height="360"></canvas>
+    <div class="info"><strong>Adiabatic condition — </strong>θ ≪ λ/(π·w·NA). Min length <span id="info-lad">—</span> mm for &lt;1% mode coupling. Linear taper assumed.</div>
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+var LAMBDA  = 0.850e-6;
+var N_CORE  = 1.535, N_CLAD = 1.510;
+var NA_WG   = Math.sqrt(N_CORE * N_CORE - N_CLAD * N_CLAD);
+var VCSEL_DIV = 10 * Math.PI / 180;
+var W0 = 5e-6, Z_R = Math.PI * W0 * W0 / LAMBDA;
+var MATERIALS = {
+  air:{n:1.000,label:"Air"}, sic:{n:2.630,label:"SiC"},
+  sio2:{n:1.453,label:"SiO₂"}, si3n4:{n:2.000,label:"Si₃N₄"},
+  pmma:{n:1.489,label:"PMMA"}, custom:{n:1.500,label:"Custom"}
+};
+var AR_PRESETS = {ideal:0.000, sin:0.001, mgo:0.002, sio2:0.005};
+
+// ── Physics ───────────────────────────────────────────────────────────────────
+function erf(x) {
+  var t = 1/(1+0.3275911*Math.abs(x));
+  var p = t*(0.254829592+t*(-0.284496736+t*(1.421413741+t*(-1.453152027+t*1.061405429))));
+  var r = 1-p*Math.exp(-(x*x));
+  return x >= 0 ? r : -r;
+}
+function beamR(z, n) { n=n||1; var zr=Z_R*n; return W0*Math.sqrt(1+(z/zr)*(z/zr)); }
+function fresnelR(n1,n2) { var r=(n1-n2)/(n1+n2); return r*r; }
+function vNum(w,h) { return (Math.PI/LAMBDA)*Math.sqrt(w*w+h*h)*NA_WG/Math.sqrt(2); }
+function numModes(w,h) { var V=vNum(w,h); return Math.max(1,Math.round(V*V/2)); }
+
+function getArR(key) {
+  var cb = document.getElementById("ar-"+key);
+  if (!cb || !cb.checked) return null;
+  var preset = document.getElementById("ar-"+key+"-preset").value;
+  if (preset === "custom") return (parseFloat(document.getElementById("ar-"+key+"-r").value)||0)/100;
+  return AR_PRESETS[preset] !== undefined ? AR_PRESETS[preset] : 0;
+}
+function effR(n1, n2, key) { var ar=getArR(key); return ar!==null ? ar : fresnelR(n1,n2); }
+
+function getN() {
+  var mat = document.getElementById("gap-material").value;
+  if (mat === "custom") return parseFloat(document.getElementById("custom-n").value)||1.0;
+  return MATERIALS[mat] ? MATERIALS[mat].n : 1.0;
+}
+function calcFresnelEff(n_gap) {
+  if (n_gap === 1.0) return (1-effR(1,1,"vcsel"))*(1-effR(1,N_CORE,"wg"));
+  return (1-effR(1,1,"vcsel"))*(1-effR(1,n_gap,"entry"))*(1-effR(n_gap,1,"exit"))*(1-effR(1,N_CORE,"wg"));
+}
+
+function coupling(dx_um, dy_um, dth_deg, sep_um, ww_um, wh_um, n_gap, fEff) {
+  n_gap=n_gap||1; fEff=fEff!=null?fEff:1;
+  var dx=dx_um*1e-6, dy=dy_um*1e-6, dth=dth_deg*Math.PI/180;
+  var sep=sep_um*1e-6, ww=ww_um*1e-6, wh=wh_um*1e-6;
+  var wz=beamR(sep,n_gap), sig=wz/Math.SQRT2;
+  var sx=0.5*(erf((ww/2-dx)/sig)+erf((ww/2+dx)/sig));
+  var sy=0.5*(erf((wh/2-dy)/sig)+erf((wh/2+dy)/sig));
+  var bha=Math.max(Math.atan(wz/(Z_R*n_gap)), VCSEL_DIV*0.3/n_gap);
+  var effAng=Math.sqrt(bha*bha+dth*dth);
+  var tNA=Math.asin(Math.min(NA_WG,0.999));
+  var angEff=Math.min(1,Math.max(0.05,1-Math.exp(-(tNA*tNA)/(2*effAng*effAng))));
+  var mm=Math.min(1,(Math.min(ww,wh)/(2*wz+Math.min(ww,wh)))+0.2);
+  return Math.min(1,Math.max(0, sx*sy*angEff*fEff*Math.min(1,mm*1.2)));
+}
+
+function betaDiff(w1, w2) {
+  var k0=2*Math.PI/LAMBDA;
+  var V1=(Math.PI/LAMBDA)*(w1*1e-6)*NA_WG, V2=(Math.PI/LAMBDA)*(w2*1e-6)*NA_WG;
+  var n1=N_CLAD+(N_CORE-N_CLAD)*(1-Math.exp(-(V1*V1)/(2.4*2.4)));
+  var n2=N_CLAD+(N_CORE-N_CLAD)*(1-Math.exp(-(V2*V2)/(2.4*2.4)))*0.7;
+  return k0*Math.abs(n1-n2);
+}
+function adiabaticL(wS, wE) {
+  var L=0;
+  for (var i=0; i<100; i++) {
+    var w=(wS+(wE-wS)*i/100)*1e-6;
+    var db=betaDiff(w*1e6, w*1e6*0.95);
+    var tmax=0.3/(db*w);
+    L+=Math.abs(wE-wS)/100*1e-6/Math.tan(Math.max(tmax,1e-4));
+  }
+  return Math.max(0.1,Math.min(50,L*1e3));
+}
+function taperTx(L, Lad) { return 1-Math.exp(-2.5*L/Lad); }
+
+// ── Coupling diagram ──────────────────────────────────────────────────────────
+function drawDiagram(sep_um, wgw_um, n_gap, dual, v1x_um, v2x_um, eta1, eta2) {
+  var canvas = document.getElementById("coupling-diagram");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var bg     = isDark ? "#1e1e1c" : "#f8f8f4";
+  var fg     = isDark ? "#aaa"    : "#555";
+  var wgFill = isDark ? "#1a2a3a" : "#ddeeff";
+  var v1Col  = "#378ADD";
+  var v2Col  = "#D85A30";
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  var vcselX = 68;
+  var wgX    = W - 90;
+  var midY   = H / 2;
+  var yScale = 1.5;
+
+  // Waveguide rectangle
+  var wgHpx = wgw_um * yScale;
+  var wgWpx = 52;
+  var wgTop = midY - wgHpx / 2;
+  ctx.fillStyle   = wgFill;
+  ctx.strokeStyle = "#378ADD";
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath();
+  ctx.rect(wgX, wgTop, wgWpx, wgHpx);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#185FA5";
+  ctx.font = "bold 11px system-ui,sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("WG", wgX + wgWpx/2, midY - 4);
+  ctx.font = "10px system-ui,sans-serif";
+  ctx.fillText(wgw_um+"µm", wgX + wgWpx/2, midY + 10);
+
+  // Gap shading
+  if (sep_um > 0) {
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.025)";
+    ctx.fillRect(vcselX, 10, wgX - vcselX, H - 20);
+    var matLabel = (n_gap === 1.0) ? "air" : "n="+n_gap.toFixed(2);
+    ctx.fillStyle = isDark ? "#555" : "#bbb";
+    ctx.font = "10px system-ui,sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(matLabel, vcselX + (wgX - vcselX)/2, 20);
+  }
+
+  // Centre axis
+  ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(vcselX, midY);
+  ctx.lineTo(wgX, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  function drawOneVcsel(cx_um, col, etaVal, lbl) {
+    var bcy = midY - cx_um * yScale;
+    var vW = 26, vH = 20;
+    // Body
+    ctx.fillStyle   = col + "28";
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = 1.2;
+    ctx.beginPath();
+    ctx.rect(vcselX - vW, bcy - vH/2, vW, vH);
+    ctx.fill();
+    ctx.stroke();
+    // Aperture line
+    var apH = 5 * yScale;
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(vcselX, bcy - apH/2);
+    ctx.lineTo(vcselX, bcy + apH/2);
+    ctx.stroke();
+    // Label above body
+    ctx.fillStyle = col;
+    ctx.font = "10px system-ui,sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(lbl, vcselX - vW/2, bcy - vH/2 - 4);
+
+    // Beam envelope
+    var STEPS = 50;
+    var upper = [], lower = [];
+    for (var i = 0; i <= STEPS; i++) {
+      var t   = i / STEPS;
+      var xpx = vcselX + t * (wgX - vcselX);
+      var zum = t * sep_um;
+      var rum = beamR(zum * 1e-6, n_gap) * 1e6;
+      upper.push([xpx, bcy - rum * yScale]);
+      lower.push([xpx, bcy + rum * yScale]);
+    }
+    // Filled area
+    ctx.beginPath();
+    ctx.moveTo(upper[0][0], upper[0][1]);
+    for (var j = 1; j <= STEPS; j++) ctx.lineTo(upper[j][0], upper[j][1]);
+    for (var k = STEPS; k >= 0; k--) ctx.lineTo(lower[k][0], lower[k][1]);
+    ctx.closePath();
+    ctx.fillStyle = col + "18";
+    ctx.fill();
+    // Dashed boundary
+    ctx.strokeStyle = col + "70";
+    ctx.lineWidth   = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(upper[0][0], upper[0][1]);
+    for (var m = 1; m <= STEPS; m++) ctx.lineTo(upper[m][0], upper[m][1]);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lower[0][0], lower[0][1]);
+    for (var p = 1; p <= STEPS; p++) ctx.lineTo(lower[p][0], lower[p][1]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Coupled beam highlight on WG face
+    var wzUm    = beamR(sep_um * 1e-6, n_gap) * 1e6;
+    var wgHalf  = wgw_um * yScale / 2;
+    var beamTop = bcy - wzUm * yScale;
+    var beamBot = bcy + wzUm * yScale;
+    var entTop  = Math.max(beamTop, midY - wgHalf);
+    var entBot  = Math.min(beamBot, midY + wgHalf);
+    if (entBot > entTop) {
+      ctx.strokeStyle = col;
+      ctx.lineWidth   = 3;
+      ctx.beginPath();
+      ctx.moveTo(wgX, entTop);
+      ctx.lineTo(wgX, entBot);
+      ctx.stroke();
+    }
+
+    // η label
+    ctx.fillStyle = col;
+    ctx.font = "bold 11px system-ui,sans-serif";
+    ctx.textAlign = "right";
+    var labelY = Math.max(14, beamTop - 5);
+    ctx.fillText((etaVal*100).toFixed(1)+"%", wgX - 6, labelY);
+  }
+
+  drawOneVcsel(v1x_um, v1Col, eta1, dual ? "V1" : "VCSEL");
+  if (dual) drawOneVcsel(v2x_um, v2Col, eta2, "V2");
+
+  // Scale bar
+  var sbPx = 25 * yScale;
+  ctx.strokeStyle = fg;
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(12, H - 12);
+  ctx.lineTo(12 + sbPx, H - 12);
+  ctx.stroke();
+  ctx.fillStyle = fg;
+  ctx.font = "10px system-ui,sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("25 µm", 12 + sbPx + 4, H - 8);
+}
+
+// ── Chart drawing ─────────────────────────────────────────────────────────────
+function drawCurve(id, xs, ys1, xlabel, color1, vlines, useDb, ys2, color2) {
+  var canvas = document.getElementById(id);
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+  var W = canvas.width, H = canvas.height;
+  var pad = {l: useDb ? 116 : 76, r: 24, t: 24, b: 56};
+  ctx.clearRect(0, 0, W, H);
+  var textCol = "#555", gridCol = "rgba(0,0,0,0.07)", axisCol = "rgba(0,0,0,0.15)";
+  var xMin = xs[0], xMax = xs[xs.length-1];
+
+  function toDisp(v) { return useDb ? -10*Math.log10(Math.max(v,1e-9)) : v; }
+  var allDisp = ys1.map(toDisp).concat(ys2 ? ys2.map(toDisp) : []);
+  var yMin = 0;
+  var yMax = useDb ? 10 : (Math.max.apply(null, allDisp) * 1.1 || 0.01);
+  var yRange = yMax - yMin || 0.01;
+
+  function toX(v) { return pad.l + (v-xMin)/(xMax-xMin) * (W-pad.l-pad.r); }
+  function toY(v) {
+    return useDb
+      ? pad.t + (v/yMax) * (H-pad.t-pad.b)
+      : H-pad.b - (v/yMax) * (H-pad.t-pad.b);
+  }
+
+  // Grid
+  ctx.strokeStyle = gridCol; ctx.lineWidth = 1;
+  for (var gi = 0; gi <= 4; gi++) {
+    var gy = pad.t + gi*(H-pad.t-pad.b)/4;
+    ctx.beginPath(); ctx.moveTo(pad.l, gy); ctx.lineTo(W-pad.r, gy); ctx.stroke();
+  }
+  // Axes
+  ctx.strokeStyle = axisCol; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,H-pad.b); ctx.lineTo(W-pad.r,H-pad.b); ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle = textCol; ctx.font = "22px system-ui,sans-serif"; ctx.textAlign = "center";
+  for (var xi = 0; xi <= 5; xi++) {
+    var xv = xMin + xi*(xMax-xMin)/5;
+    ctx.fillText(xv.toFixed(xMax > 50 ? 0 : 1), toX(xv), H-pad.b+30);
+  }
+  // Y ticks
+  ctx.textAlign = "right";
+  for (var yi = 0; yi <= 4; yi++) {
+    var frac = yi/4;
+    var dispV = useDb ? -(yMax - yMax*frac) : yMax*frac;
+    var lbl = useDb ? dispV.toFixed(1)+" dB" : (yMax*frac*100).toFixed(0)+"%";
+    var py = useDb ? pad.t + frac*(H-pad.t-pad.b) : H-pad.b - frac*(H-pad.t-pad.b);
+    ctx.fillText(lbl, pad.l-8, py+8);
+  }
+  // Axis labels
+  ctx.fillStyle = textCol; ctx.textAlign = "center";
+  ctx.fillText(xlabel, pad.l+(W-pad.l-pad.r)/2, H-6);
+  ctx.save();
+  ctx.translate(useDb?26:18, pad.t+(H-pad.t-pad.b)/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(useDb ? "Insertion loss (dB)" : "Coupling η", 0, 0);
+  ctx.restore();
+
+  // Draw lines
+  function drawLine(ys, col, dashed) {
+    ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineJoin = "round";
+    ctx.setLineDash(dashed ? [8,5] : []);
+    ctx.beginPath();
+    for (var i = 0; i < xs.length; i++) {
+      var px = toX(xs[i]), py = toY(toDisp(ys[i]));
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  drawLine(ys1, color1, false);
+  if (ys2) drawLine(ys2, color2 || "#D85A30", true);
+
+  // Vertical markers
+  if (vlines) {
+    for (var vi = 0; vi < vlines.length; vi++) {
+      ctx.strokeStyle = vlines[vi].col || "#888";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5,4]);
+      ctx.beginPath();
+      ctx.moveTo(toX(vlines[vi].x), pad.t);
+      ctx.lineTo(toX(vlines[vi].x), H-pad.b);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+function range(s, e, n) {
+  var arr = [];
+  for (var i = 0; i < n; i++) arr.push(s + i*(e-s)/(n-1));
+  return arr;
+}
+
+// ── AR UI ─────────────────────────────────────────────────────────────────────
+function onArCheck(key, checked) {
+  document.getElementById("ar-"+key+"-opts").style.display = checked ? "block" : "none";
+  update();
+}
+function onArPreset(key) {
+  var preset = document.getElementById("ar-"+key+"-preset").value;
+  var cd = document.getElementById("ar-"+key+"-custom");
+  if (cd) cd.style.display = preset === "custom" ? "flex" : "none";
+  update();
+}
+function updateArSurface(key, rVal, isCoated) {
+  var badge = document.getElementById("badge-"+key);
+  if (badge) { badge.textContent = isCoated ? "AR coated" : "uncoated"; badge.className = "ar-badge "+(isCoated?"on":"off"); }
+  var el = document.getElementById("rv-"+key);
+  if (el) el.textContent = (rVal*100).toFixed(3)+"% ("+(10*Math.log10(1-rVal)).toFixed(3)+" dB)";
+}
+function onMaterialChange() {
+  var mat = document.getElementById("gap-material").value;
+  document.getElementById("custom-n-wrap").style.display = mat === "custom" ? "flex" : "none";
+  var isSolid = mat !== "air";
+  ["entry","exit"].forEach(function(k) {
+    var surf = document.getElementById("ar-"+k).closest(".ar-surface");
+    if (surf) surf.style.opacity = isSolid ? "1" : "0.4";
+    document.getElementById("ar-"+k).disabled = !isSolid;
+  });
+  update();
+}
+
+// ── Dual VCSEL UI ─────────────────────────────────────────────────────────────
+function onVcsel2Toggle() {
+  var on = document.getElementById("vcsel2-enable").checked;
+  document.getElementById("vcsel2-controls").style.display = on ? "block" : "none";
+  document.getElementById("card-eta2").style.display    = on ? "" : "none";
+  document.getElementById("card-combined").style.display = on ? "" : "none";
+  document.getElementById("lbl-card-eta").textContent   = on ? "VCSEL 1 η" : "Coupling η";
+  document.getElementById("lbl-dx-title").textContent   = on ? "X offset — pair midpoint" : "X offset (Δx)";
+  update();
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+var wgw2 = 50, currentTab = 0, yAxisMode = "pct";
+
+function setYAxis(mode) {
+  yAxisMode = mode;
+  document.getElementById("btn-pct").classList.toggle("active", mode === "pct");
+  document.getElementById("btn-db").classList.toggle("active",  mode === "db");
+  update();
+}
+function switchTab(i) {
+  currentTab = i;
+  document.querySelectorAll(".tab").forEach(function(b,j){ b.classList.toggle("active", i===j); });
+  document.querySelectorAll(".tab-panel").forEach(function(p,j){ p.classList.toggle("active", i===j); });
+  update();
+}
+
+// ── Main update ───────────────────────────────────────────────────────────────
+function update() {
+  var sep    = parseFloat(document.getElementById("sep").value);
+  var dx     = parseFloat(document.getElementById("dx").value);
+  var dy     = parseFloat(document.getElementById("dy").value);
+  var dtheta = parseFloat(document.getElementById("dtheta").value);
+  var wgw    = parseFloat(document.getElementById("wgw").value);
+  var taper  = parseFloat(document.getElementById("taper").value);
+  var wgH    = 50;
+  var n_gap  = getN();
+  var mat    = document.getElementById("gap-material").value;
+  var isAir  = (Math.abs(n_gap - 1.0) < 0.001);
+  var dual   = document.getElementById("vcsel2-enable").checked;
+  var v2cx   = dual ? parseFloat(document.getElementById("vcsel2-cx").value) : 0;
+  var useDb  = (yAxisMode === "db");
+
+  // VCSEL positions: dx = midpoint; V1 at dx-v2cx/2, V2 at dx+v2cx/2
+  var v1x = dual ? dx - v2cx/2 : dx;
+  var v2x = dual ? dx + v2cx/2 : 0;
+
+  // Fresnel
+  var rVcsel = effR(1,1,"vcsel"), rEntry = effR(1,n_gap,"entry"),
+      rExit  = effR(n_gap,1,"exit"), rWg = effR(1,N_CORE,"wg");
+  updateArSurface("vcsel", rVcsel, document.getElementById("ar-vcsel").checked);
+  updateArSurface("entry", rEntry, document.getElementById("ar-entry").checked);
+  updateArSurface("exit",  rExit,  document.getElementById("ar-exit").checked);
+  updateArSurface("wg",    rWg,    document.getElementById("ar-wg").checked);
+  var fEff   = calcFresnelEff(n_gap);
+  var fLoss  = (1-fEff)*100;
+  var fLoss_dB = (10*Math.log10(Math.max(fEff,1e-9))).toFixed(3);
+  document.getElementById("total-fresnel-loss").textContent = fLoss.toFixed(3)+"% ("+fLoss_dB+" dB)";
+  document.getElementById("total-fresnel-eff").textContent  = (fEff*100).toFixed(3)+"%";
+
+  // Gap info
+  document.getElementById("gap-info").textContent = isAir
+    ? "Air gap — beam diverges freely"
+    : (MATERIALS[mat] ? MATERIALS[mat].label : "Custom")+" (n="+n_gap.toFixed(3)+") — Rayleigh range extended to "+(Z_R*n_gap*1e6).toFixed(0)+" µm in medium";
+
+  if (dual) {
+    document.getElementById("vcsel2-sep-info").textContent =
+      "V1 at "+v1x.toFixed(1)+" µm  |  V2 at "+v2x.toFixed(1)+" µm  |  separation: "+Math.abs(v2cx).toFixed(1)+" µm";
+  }
+
+  // Input width: taper tab uses wgw2, others use wgw
+  var inputW = (currentTab === 2) ? wgw2 : wgw;
+
+  // Coupling — system width
+  var eta1 = coupling(v1x, dy, dtheta, sep, wgw, wgH, n_gap, fEff);
+  var eta2 = dual ? coupling(v2x, dy, dtheta, sep, wgw, wgH, n_gap, fEff) : 0;
+  var etaCombined = dual ? (eta1+eta2)/2 : eta1;
+
+  // Coupling — taper input width
+  var eta1w2 = coupling(v1x, dy, dtheta, sep, wgw2, wgH, n_gap, fEff);
+  var eta2w2 = dual ? coupling(v2x, dy, dtheta, sep, wgw2, wgH, n_gap, fEff) : 0;
+  var etaCombW2 = dual ? (eta1w2+eta2w2)/2 : eta1w2;
+
+  var wz    = beamR(sep*1e-6, n_gap)*1e6;
+  var Lad   = adiabaticL(wgw2, 50);
+  var ttx   = taperTx(taper, Lad);
+  var total = etaCombW2 * ttx;
+
+  // Display values — taper tab uses wgw2-based coupling
+  var dispEta1     = (currentTab === 2) ? eta1w2 : eta1;
+  var dispEta2     = (currentTab === 2) ? eta2w2 : eta2;
+  var dispCombined = (currentTab === 2) ? etaCombW2 : etaCombined;
+
+  // Mode counts
+  var modes      = numModes(inputW*1e-6, wgH*1e-6);
+  var modesFinal = numModes(50e-6, wgH*1e-6);
+  var modesAfterTaper = Math.min(modes, modesFinal);
+
+  // Metric cards
+  document.getElementById("m-eta").textContent    = (dispEta1*100).toFixed(1)+"%";
+  document.getElementById("m-eta-db").textContent = (10*Math.log10(Math.max(dispEta1,1e-9))).toFixed(2)+" dB";
+  if (dual) {
+    document.getElementById("m-eta2").textContent    = (dispEta2*100).toFixed(1)+"%";
+    document.getElementById("m-eta2-db").textContent = (10*Math.log10(Math.max(dispEta2,1e-9))).toFixed(2)+" dB";
+    document.getElementById("m-combined").textContent = (dispCombined*100).toFixed(1)+"%";
+  }
+  document.getElementById("m-beam").textContent      = (wz*2).toFixed(1)+" µm";
+  document.getElementById("m-beam-sub").textContent  = "gap="+sep+" µm, "+(isAir?"air":(MATERIALS[mat]?MATERIALS[mat].label:"custom"));
+  document.getElementById("m-modes").textContent     = modes;
+  document.getElementById("m-modes-sub").textContent = inputW+"×"+wgH+" µm";
+  document.getElementById("m-total").textContent     = (total*100).toFixed(1)+"%";
+  document.getElementById("m-total-db").textContent  = (10*Math.log10(Math.max(total,1e-9))).toFixed(2)+" dB";
+
+  var taperCard = document.getElementById("card-modes-taper");
+  taperCard.style.display = (currentTab === 2) ? "" : "none";
+  if (currentTab === 2) {
+    document.getElementById("m-modes-taper").textContent     = modesAfterTaper;
+    document.getElementById("m-modes-taper-sub").textContent = "50×50 µm core";
+  }
+
+  document.getElementById("info-na").textContent      = NA_WG.toFixed(3);
+  document.getElementById("info-zr").textContent      = (Z_R*1e6).toFixed(0);
+  document.getElementById("info-zr2").textContent     = (Z_R*1e6).toFixed(0);
+  document.getElementById("info-fresnel").textContent = fLoss.toFixed(3)+"% ("+fLoss_dB+" dB)";
+
+  // Coupling diagram (always drawn)
+  drawDiagram(sep, inputW, n_gap, dual, v1x, v2x, dispEta1, dispEta2);
+
+  // Tab charts
+  if (currentTab === 0) {
+    var xs1  = range(-100, 100, 201);
+    var ysV1 = xs1.map(function(x){ return coupling(dual?x-v2cx/2:x, 0, 0, sep, wgw, wgH, n_gap, fEff); });
+    var ysV2 = dual ? xs1.map(function(x){ return coupling(x+v2cx/2, 0, 0, sep, wgw, wgH, n_gap, fEff); }) : null;
+    var lg = document.getElementById("legend-dx");
+    lg.innerHTML = dual
+      ? '<span><span class="legend-line" style="background:#378ADD"></span>VCSEL 1</span><span><span class="legend-line" style="background:#D85A30"></span>VCSEL 2</span>'
+      : '';
+    var vmarks = [{x:v1x, col:"#378ADD"}];
+    if (dual) vmarks.push({x:v2x, col:"#D85A30"});
+    drawCurve("chart-dx",  xs1, ysV1, "X midpoint (µm)", "#378ADD", vmarks, useDb, ysV2, "#D85A30");
+
+    var ss = range(0, 300, 121);
+    drawCurve("chart-sep", ss, ss.map(function(s){ return coupling(v1x,dy,dtheta,s,wgw,wgH,n_gap,fEff); }),
+      "Gap (µm)", "#1D9E75", [{x:sep,col:"#1D9E75"}], useDb);
+
+    var as = range(-15, 15, 61);
+    drawCurve("chart-ang", as, as.map(function(a){ return coupling(v1x,dy,a,sep,wgw,wgH,n_gap,fEff); }),
+      "Tilt angle (°)", "#BA7517", [{x:dtheta,col:"#BA7517"}], useDb);
+
+  } else if (currentTab === 1) {
+    document.getElementById("m-ar").textContent     = (wgw/wgH).toFixed(2)+":1";
+    document.getElementById("m-ar-sub").textContent = wgw+"×50 µm";
+    document.getElementById("m-na").textContent     = NA_WG.toFixed(3);
+    document.getElementById("m-vnum").textContent   = vNum(wgw*1e-6, wgH*1e-6).toFixed(1);
+    var ws = range(50, 100, 51);
+    drawCurve("chart-width", ws, ws.map(function(w){ return coupling(v1x,dy,dtheta,sep,w,wgH,n_gap,fEff); }),
+      "WG width (µm)", "#534AB7", [{x:wgw,col:"#534AB7"}], false);
+
+  } else {
+    document.getElementById("m-lad").textContent     = Lad.toFixed(1)+" mm";
+    document.getElementById("m-lad-sub").textContent = wgw2+"→50 µm";
+    document.getElementById("m-ttx").textContent     = (ttx*100).toFixed(1)+"%";
+    document.getElementById("m-ttx-sub").textContent = "at "+taper.toFixed(1)+" mm";
+    document.getElementById("m-ttotal").textContent  = (etaCombW2*taperTx(taper,Lad)*100).toFixed(1)+"%";
+    document.getElementById("info-lad").textContent  = Lad.toFixed(1);
+    document.getElementById("taper-chart-label").textContent = "Total efficiency vs taper length ("+wgw2+"→50 µm, height 50 µm)";
+    var ls = range(0.1, 60, 100);
+    drawCurve("chart-taper", ls, ls.map(function(l){ return taperTx(l,Lad)*etaCombW2; }),
+      "Taper length (mm)", "#D85A30", [{x:taper,col:"#D85A30"}], false);
+  }
+}
+
+// ── Sliders ───────────────────────────────────────────────────────────────────
+function bindSlider(id, lblId, unit, dec) {
+  var el = document.getElementById(id), lbl = document.getElementById(lblId);
+  if (!el || !lbl) return;
+  el.addEventListener("input", function(){ lbl.textContent = parseFloat(el.value).toFixed(dec)+" "+unit; update(); });
+}
+bindSlider("sep",       "lbl-sep",       "µm", 1);
+bindSlider("dx",        "lbl-dx",        "µm", 1);
+bindSlider("dy",        "lbl-dy",        "µm", 1);
+bindSlider("dtheta",    "lbl-dtheta",    "°",  2);
+bindSlider("wgw",       "lbl-wgw",       "µm", 0);
+bindSlider("taper",     "lbl-taper",     "mm", 1);
+bindSlider("vcsel2-cx", "lbl-vcsel2-cx", "µm", 1);
+document.getElementById("wgw2").addEventListener("input", function(){
+  wgw2 = parseFloat(this.value);
+  document.getElementById("lbl-wgw2").textContent = wgw2+" µm";
+  update();
+});
+document.getElementById("custom-n").addEventListener("input", update);
+
+// ── URL state ─────────────────────────────────────────────────────────────────
+var URL_KEYS = ["sep","dx","dy","dtheta","wgw","taper","vcsel2-cx","gap-material","custom-n",
+  "ar-vcsel","ar-vcsel-preset","ar-vcsel-r",
+  "ar-entry","ar-entry-preset","ar-entry-r",
+  "ar-exit","ar-exit-preset","ar-exit-r",
+  "ar-wg","ar-wg-preset","ar-wg-r",
+  "vcsel2-enable","wgw2"];
+
+function saveToURL() {
+  var params = new URLSearchParams();
+  URL_KEYS.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    params.set(id, el.type === "checkbox" ? (el.checked ? "1" : "0") : el.value);
+  });
+  var url = window.location.pathname + "?" + params.toString();
+  history.replaceState(null, "", url);
+  navigator.clipboard.writeText(window.location.href).then(function() {
+    var btn = document.getElementById("save-url-btn");
+    btn.textContent = "Link copied!";
+    setTimeout(function(){ btn.textContent = "Copy shareable link"; }, 2000);
+  });
+}
+
+function loadFromURL() {
+  var params = new URLSearchParams(window.location.search);
+  if (!params.toString()) return;
+  var lblMap  = {sep:"lbl-sep",dx:"lbl-dx",dy:"lbl-dy",dtheta:"lbl-dtheta",wgw:"lbl-wgw",taper:"lbl-taper","vcsel2-cx":"lbl-vcsel2-cx",wgw2:"lbl-wgw2"};
+  var unitMap = {sep:"µm",dx:"µm",dy:"µm",dtheta:"°",wgw:"µm",taper:"mm","vcsel2-cx":"µm",wgw2:"µm"};
+  var decMap  = {sep:1,dx:1,dy:1,dtheta:2,wgw:0,taper:1,"vcsel2-cx":1,wgw2:0};
+  URL_KEYS.forEach(function(id) {
+    if (!params.has(id)) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === "checkbox") {
+      el.checked = params.get(id) === "1";
+    } else {
+      el.value = params.get(id);
+      if (id === "wgw2") wgw2 = parseFloat(el.value);
+      if (lblMap[id]) {
+        document.getElementById(lblMap[id]).textContent =
+          parseFloat(el.value).toFixed(decMap[id]||1)+" "+(unitMap[id]||"");
+      }
+    }
+  });
+  // Sync AR opts visibility
+  ["vcsel","entry","exit","wg"].forEach(function(key) {
+    var cb = document.getElementById("ar-"+key);
+    if (cb) {
+      document.getElementById("ar-"+key+"-opts").style.display = cb.checked ? "block" : "none";
+      var preset = document.getElementById("ar-"+key+"-preset");
+      if (preset) {
+        var cd = document.getElementById("ar-"+key+"-custom");
+        if (cd) cd.style.display = preset.value === "custom" ? "flex" : "none";
+      }
+    }
+  });
+  // Sync dual VCSEL
+  onVcsel2Toggle();
+}
+
+onMaterialChange();
+loadFromURL();
+update();
+</script>
+</body>
+</html>
